@@ -1,0 +1,18 @@
+{
+    "compilerOptions": {
+        "target": "es3",
+        "module": "commonjs",
+        "declaration": true,
+        "outDir": "./src",
+        "strict": true,
+        "lib": ["es2015", "dom"],
+        "baseUrl": ".",
+        "paths": {
+            "add-dom-event-listener": ["lib/add-dom-event-listener"],
+            "is-absolute-url": ["lib/is-absolute-url"],
+            "same-origin": ["lib/same-origin"]
+        }
+    },
+    "include": ["lib/**/*.ts"],
+    "exclude": ["node_modules", "tests/**/*.test.ts"]
+}

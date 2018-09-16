@@ -1,0 +1,33 @@
+{
+    "name": "@stembord/changeset",
+    "version": "0.1.0",
+    "description": "ecto like changesets for typescript",
+    "repository": {
+        "type": "git",
+        "url": "https://gitlab.com/nathanfaucett/js-changeset.git"
+    },
+    "main": "./src/index.js",
+    "types": "./src/index.d.ts",
+    "module": "./lib/index.ts",
+    "scripts": {
+        "build": "tsc",
+        "prepublishOnly": "npm run clean && npm run build",
+        "test": "ts-node node_modules/tape/bin/tape ./tests/**/*.test.ts | tap-spec",
+        "clean": "rm -rf ./src"
+    },
+    "keywords": [
+        "changeset"
+    ],
+    "author": "Nathan Faucett",
+    "license": "(MIT OR Apache-2.0)",
+    "readmeFilename": "README.md",
+    "devDependencies": {
+        "@types/tape": "^4.2.32",
+        "parcel-bundler": "^1.9.7",
+        "tap-spec": "^5.0.0",
+        "tape": "^4.9.1",
+        "ts-node": "^7.0.0",
+        "typescript": "^3.0.1"
+    },
+    "dependencies": {}
+}
