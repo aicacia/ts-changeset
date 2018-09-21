@@ -3,6 +3,7 @@ import { Changeset } from "../lib";
 
 const changesetFn = (changeset: Changeset) =>
     changeset
+        .filter(["age", "name", "agreedToTerms"])
         .validateAcceptance("agreedToTerms")
         .validateLength("age", { gt: 18 })
         .validateFormat("name", /[A-Za-z0-9\-_]+/)
@@ -14,8 +15,6 @@ tape("Changeset valid", (assert: tape.Test) => {
         name: "",
         agreedToTerms: false
     });
-
-    assert.deepEquals(changeset.getAllowed(), ["age", "name", "agreedToTerms"]);
 
     changeset.addChanges({
         age: 20,
@@ -55,12 +54,9 @@ tape("Changeset invalid", (assert: tape.Test) => {
         agreedToTerms: false
     });
     assert.deepEquals(changeset.getErrors(), {
-        agreedToTerms: [
-            { message: "acceptance", keys: [] },
-            { message: "required", keys: [] }
-        ],
         age: [{ message: "length", keys: ["gt", 18] }],
-        name: [{ message: "format", keys: [/[A-Za-z0-9\-_]+/] }]
+        name: [{ message: "format", keys: [/[A-Za-z0-9\-_]+/] }],
+        agreedToTerms: [{ message: "acceptance", keys: [] }]
     });
 
     assert.end();

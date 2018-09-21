@@ -15,22 +15,15 @@ export interface IModified {
     [key: string]: boolean;
 }
 
-const unique = <T>(value: T, index: number, self: T[]) =>
-    self.indexOf(value) === index;
-
 export class Changeset {
     defaults: IChanges;
-    allowed: string[];
     changes: IChanges;
     errors: IErrors;
     modified: IModified;
     valid: boolean;
 
-    constructor(defaults: IChanges, allowed: string[] = []) {
-        const defaultAllowed = Object.keys(defaults);
-
+    constructor(defaults: IChanges) {
         this.defaults = defaults;
-        this.allowed = allowed.concat(defaultAllowed).filter(unique);
         this.changes = this.defaults;
         this.errors = {};
         this.modified = {};
@@ -41,12 +34,20 @@ export class Changeset {
         return this.valid;
     }
 
+    isInvalid() {
+        return !this.isValid();
+    }
+
     hasChange(field: string) {
         return !!this.changes[field];
     }
 
-    getChange<T = any>(field: string, defaultValue?: T): T {
-        return this.changes[field] || defaultValue;
+    getChange<T = any>(field: string, defaultValue?: T): T | undefined {
+        if (this.changes.hasOwnProperty(field)) {
+            return this.changes[field];
+        } else {
+            return defaultValue;
+        }
     }
 
     getModified(field: string): boolean {
@@ -55,14 +56,6 @@ export class Changeset {
 
     getError(field: string): IError[] {
         return this.errors[field] || [];
-    }
-
-    getAllowed(): string[] {
-        return this.allowed;
-    }
-
-    isAllowed(field: string): boolean {
-        return this.allowed.indexOf(field) !== -1;
     }
 
     getErrors(): IErrors {
@@ -74,24 +67,21 @@ export class Changeset {
     }
 
     addError(field: string, message: string, keys: any[] = []): Changeset {
-        if (this.isAllowed(field)) {
-            const errors = this.errors[field] || (this.errors[field] = []);
+        const errors = this.errors[field] || (this.errors[field] = []);
 
-            errors.push({
-                message,
-                keys
-            });
+        errors.push({
+            message,
+            keys
+        });
 
-            this.valid = false;
-        }
+        this.valid = false;
+
         return this;
     }
 
     addChange<T = any>(field: string, value: T): Changeset {
-        if (this.isAllowed(field)) {
-            this.modified[field] = true;
-            this.changes[field] = value;
-        }
+        this.changes[field] = value;
+        this.modified[field] = true;
         return this;
     }
 
@@ -102,22 +92,61 @@ export class Changeset {
         return this;
     }
 
+    addDefault<T = any>(field: string, value: T): Changeset {
+        this.defaults[field] = value;
+        return this;
+    }
+
+    addDefaults(defaults: IChanges): Changeset {
+        Object.keys(defaults).forEach(key => {
+            this.addDefault(key, defaults[key]);
+        });
+        return this;
+    }
+
     clearErrors(): Changeset {
         this.errors = {};
         this.valid = true;
         return this;
     }
 
-    clear(): Changeset {
+    clearChanges(): Changeset {
         this.changes = this.defaults;
-        this.errors = {};
         this.modified = {};
-        this.valid = true;
-        return this.clearErrors();
+        return this;
+    }
+
+    clearDefaults(): Changeset {
+        this.defaults = {};
+        return this;
+    }
+
+    clear(): Changeset {
+        this.clearErrors();
+        this.clearChanges();
+        return this;
+    }
+
+    filter(fields: string[]): Changeset {
+        const changes: IChanges = {},
+            errors: IErrors = {},
+            modified: IModified = {};
+
+        fields.forEach(field => {
+            changes[field] = this.getChange(field);
+            errors[field] = this.getError(field);
+            modified[field] = true;
+        });
+
+        this.changes = changes;
+        this.errors = errors;
+        this.modified = modified;
+
+        return this;
     }
 
     validateAcceptance(field: string): Changeset {
-        const value: boolean = this.getChange(field);
+        const value: boolean = !!this.getChange(field);
 
         if (value !== true) {
             this.addError(field, "acceptance");
@@ -131,6 +160,7 @@ export class Changeset {
         opts: { [key: string]: number } = {}
     ): Changeset {
         let value = this.getChange(field);
+
         value = value == null ? [] : value;
 
         const length =
