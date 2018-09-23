@@ -1,10 +1,10 @@
 {
     "name": "@stembord/changeset",
-    "version": "0.1.1",
+    "version": "0.1.2",
     "description": "ecto like changesets for typescript",
     "repository": {
         "type": "git",
-        "url": "https://gitlab.com/nathanfaucett/js-changeset.git"
+        "url": "https://gitlab.com/stembord/ts-changeset.git"
     },
     "main": "./src/index.js",
     "types": "./src/index.d.ts",
