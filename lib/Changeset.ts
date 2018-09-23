@@ -187,7 +187,7 @@ export class Changeset {
         values.forEach((field: string) => {
             const value = this.getChange(field);
 
-            if (value == null) {
+            if (value == null || value === "") {
                 this.addError(field, "required");
             }
         });
