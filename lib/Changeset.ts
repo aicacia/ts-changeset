@@ -156,6 +156,10 @@ export class Changeset<T extends {}> extends Record<IChangeset<any>>({
     );
   }
 
+  validate(validator: (changeset: this) => this): this {
+    return validator(this);
+  }
+
   validateAcceptance<K extends KeyOf<T>>(field: K): this {
     const value: boolean = !!this.getChange(field);
 
