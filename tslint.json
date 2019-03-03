@@ -10,6 +10,7 @@
     "no-empty": false,
     "member-access": false,
     "no-this-assignment": false,
+    "max-classes-per-file": false,
     "variable-name": [
       true,
       "allow-pascal-case",

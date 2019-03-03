@@ -3,11 +3,10 @@
     "target": "es3",
     "module": "commonjs",
     "moduleResolution": "node",
-    "declaration": true,
     "outDir": "./src",
     "strict": true,
-    "downlevelIteration": true,
+    "declaration": true,
     "lib": ["esnext"]
   },
-  "include": ["lib"]
+  "include": ["lib/**/*"]
 }

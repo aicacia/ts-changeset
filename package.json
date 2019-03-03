@@ -1,10 +1,10 @@
 {
-  "name": "@stembord/changeset",
-  "version": "0.1.4",
+  "name": "@aicacia/changeset",
+  "version": "0.1.0",
   "description": "ecto like changesets for typescript",
   "repository": {
     "type": "git",
-    "url": "https://gitlab.com/stembord/ts-changeset.git"
+    "url": "https://gitlab.com/aicacia/ts-changeset.git"
   },
   "main": "./src/index.js",
   "types": "./src/index.d.ts",
@@ -26,16 +26,18 @@
   "license": "(MIT OR Apache-2.0)",
   "readmeFilename": "README.md",
   "devDependencies": {
-    "@types/tape": "^4.2.32",
+    "@types/tape": "^4.2.33",
     "parcel-bundler": "^1.11.0",
-    "prettier": "^1.15.3",
+    "prettier": "^1.16.4",
     "prettier-tslint": "^0.4.2",
     "tap-spec": "^5.0.0",
-    "tape": "^4.9.1",
-    "ts-node": "^7.0.0",
-    "tslint": "^5.12.0",
-    "tslint-config-prettier": "^1.17.0",
-    "typescript": "^3.0.1"
+    "tape": "^4.10.1",
+    "ts-node": "^8.0.2",
+    "tslint": "^5.13.0",
+    "tslint-config-prettier": "^1.18.0",
+    "typescript": "^3.3.3333"
   },
-  "dependencies": {}
+  "dependencies": {
+    "immutable": ">= 4.0.0-rc.12"
+  }
 }

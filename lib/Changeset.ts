@@ -1,233 +1,223 @@
-export interface IChanges {
-  [key: string]: any;
-}
+import { List, Map, Record } from "immutable";
+import { COMPARISIONS } from "./comparisions";
 
-export interface IError {
+type KeyOf<T> = keyof T;
+type ValueOf<T> = T[keyof T];
+
+export type IChanges<T extends {}> = Map<KeyOf<T>, ValueOf<T>>;
+
+export interface IChangesetError {
   message: string;
-  keys: any[];
+  values: any[];
 }
 
-export interface IErrors {
-  [key: string]: IError[];
+export const ChangesetError = Record<IChangesetError>({
+  message: "",
+  values: []
+});
+
+export type IChangesetErrors<T extends {}> = Map<
+  KeyOf<T>,
+  List<Record<IChangesetError>>
+>;
+
+export type IModified<T extends {}> = Map<KeyOf<T>, boolean>;
+
+export interface IChangeset<T extends {}> {
+  defaults: IChanges<T>;
+  changes: IChanges<T>;
+  errors: IChangesetErrors<T>;
+  modified: IModified<T>;
+  valid: boolean;
 }
 
-export interface IModified {
-  [key: string]: boolean;
-}
-
-export class Changeset {
-  private _defaults: IChanges;
-  private _changes: IChanges;
-  private _errors: IErrors;
-  private _modified: IModified;
-  private _valid: boolean;
-
-  constructor(defaults: IChanges) {
-    this._defaults = defaults;
-    this._changes = this._defaults;
-    this._errors = {};
-    this._modified = {};
-    this._valid = true;
+// TODO: Base class expressions cannot reference class type parameters ts(2562)
+// fix this so we extend Record<IChangeset<T>>
+export class Changeset<T extends {}> extends Record<IChangeset<any>>({
+  defaults: Map(),
+  changes: Map(),
+  errors: Map(),
+  modified: Map(),
+  valid: true
+}) {
+  constructor(defaults: Partial<T> | Iterable<[KeyOf<T>, ValueOf<T>]>) {
+    super({
+      defaults: Map(defaults),
+      changes: Map(defaults)
+    });
   }
 
-  isValid() {
-    return this._valid;
+  isValid(): boolean {
+    return this.valid;
   }
 
-  isInvalid() {
+  isInvalid(): boolean {
     return !this.isValid();
   }
 
-  hasChange(field: string) {
-    return !!this._changes[field];
+  hasChange<K extends KeyOf<T>>(field: K): boolean {
+    return this.changes.has(field);
   }
 
-  getChange<T = any>(field: string, defaultValue?: T): T | undefined {
-    if (this._changes.hasOwnProperty(field)) {
-      return this._changes[field];
-    } else {
-      return defaultValue;
-    }
+  getChange<K extends KeyOf<T>>(
+    field: K,
+    defaultValue?: T[K]
+  ): T[K] | undefined {
+    return this.changes.get(field, defaultValue);
   }
 
-  getModified(field: string): boolean {
-    return !!this._modified[field];
+  getModified<K extends KeyOf<T>>(field: K): boolean {
+    return !!this.modified.get(field);
   }
 
-  getError(field: string): IError[] {
-    return this._errors[field] || [];
+  getError<K extends KeyOf<T>>(field: K): List<Record<IChangesetError>> {
+    return this.errors.get(field) || List();
   }
 
-  getErrors(): IErrors {
-    return this._errors;
+  getErrors(): IChangesetErrors<T> {
+    return this.errors as any;
   }
 
-  getChanges(): IChanges {
-    return this._changes;
+  getChanges(): IChanges<T> {
+    return this.changes as any;
   }
 
-  addError(field: string, message: string, keys: any[] = []): Changeset {
-    const errors = this._errors[field] || (this._errors[field] = []);
-
-    errors.push({
-      message,
-      keys
-    });
-
-    this._valid = false;
-
-    return this;
+  addError<K extends KeyOf<T>>(
+    field: K,
+    message: string,
+    values: any[] = []
+  ): this {
+    return this.set(
+      "errors",
+      this.errors.update(field, errors =>
+        (errors || List()).push(
+          ChangesetError({
+            message,
+            values
+          })
+        )
+      )
+    ).set("valid", false);
   }
 
-  addChange<T = any>(field: string, value: T): Changeset {
-    this._changes[field] = value;
-    this._modified[field] = true;
-    return this;
+  addChange<K extends KeyOf<T>>(field: K, value: ValueOf<T>): this {
+    return this.update("changes", changes => changes.set(field, value)).update(
+      "modified",
+      modified => modified.set(field, true)
+    );
   }
 
-  addChanges(changes: IChanges): Changeset {
-    Object.keys(changes).forEach(key => {
-      this.addChange(key, changes[key]);
-    });
-    return this;
+  addChanges(changes: T): this {
+    return Object.keys(changes).reduce(
+      (acc, key) => acc.addChange(key as any, (changes as any)[key as any]),
+      this
+    );
   }
 
-  addDefault<T = any>(field: string, value: T): Changeset {
-    this._defaults[field] = value;
-    return this;
+  addDefault<K extends KeyOf<T>>(field: K, value: ValueOf<T>): this {
+    return this.update("defaults", defaults => defaults.set(field, value));
   }
 
-  addDefaults(defaults: IChanges): Changeset {
-    Object.keys(defaults).forEach(key => {
-      this.addDefault(key, defaults[key]);
-    });
-    return this;
+  addDefaults(defaults: T): this {
+    return Object.keys(defaults).reduce(
+      (acc, key) => acc.addDefault(key as any, (defaults as any)[key as any]),
+      this
+    );
   }
 
-  clearErrors(): Changeset {
-    this._errors = {};
-    this._valid = true;
-    return this;
+  clearErrors(): this {
+    return this.set("errors", Map()).set("valid", true);
   }
 
-  clearChanges(): Changeset {
-    this._changes = this._defaults;
-    this._modified = {};
-    return this;
+  clearChanges(): this {
+    return this.set("changes", this.defaults).set("modified", Map());
   }
 
-  clearDefaults(): Changeset {
-    this._defaults = {};
-    return this;
+  clearDefaults(): this {
+    return this.set("defaults", Map());
   }
 
-  clear(): Changeset {
-    this.clearErrors();
-    this.clearChanges();
-    return this;
+  clear(): this {
+    return this.clearErrors().clearChanges();
   }
 
-  filter(fields: string[]): Changeset {
-    const changes: IChanges = {},
-      errors: IErrors = {},
-      modified: IModified = {};
-
-    fields.forEach(field => {
-      changes[field] = this.getChange(field);
-      errors[field] = this.getError(field);
-      modified[field] = true;
-    });
-
-    this._changes = changes;
-    this._errors = errors;
-    this._modified = modified;
-
-    return this;
+  filter(fields: Array<KeyOf<T>>): this {
+    return fields.reduce(
+      (acc, field) =>
+        acc
+          .update("changes", changes =>
+            changes.set(field, this.getChange(field))
+          )
+          .update("errors", errors => errors.set(field, this.getError(field)))
+          .update("modified", modified => modified.set(field, true)),
+      this.set("changes", Map())
+        .set("errors", Map())
+        .set("modified", Map())
+    );
   }
 
-  validateAcceptance(field: string): Changeset {
+  validateAcceptance<K extends KeyOf<T>>(field: K): this {
     const value: boolean = !!this.getChange(field);
 
     if (value !== true) {
-      this.addError(field, "acceptance");
+      return this.addError(field, "acceptance");
+    } else {
+      return this;
     }
-
-    return this;
   }
 
-  validateLength(
-    field: string,
+  validateLength<K extends KeyOf<T>>(
+    field: K,
     opts: { [key: string]: number } = {}
-  ): Changeset {
-    let value = this.getChange(field);
+  ): this {
+    let value = this.getChange(field) as any;
 
     value = value == null ? [] : value;
 
     const length =
       value && typeof value.length === "number" ? +value.length : value;
 
-    Object.keys(opts).forEach((op: string) => {
+    return Object.keys(opts).reduce((acc, op) => {
       const comparision = COMPARISIONS[op];
 
       if (comparision) {
         const opLength = +opts[op];
 
         if (!comparision(length, opLength)) {
-          this.addError(field, "length", [op, opLength]);
+          return acc.addError(field, "length", [op, opLength]);
+        } else {
+          return acc;
         }
       } else {
         throw new TypeError("No comparision for " + op);
       }
-    });
-
-    return this;
+    }, this);
   }
 
-  validateRequired(values: string[]): Changeset {
-    values.forEach((field: string) => {
-      const value = this.getChange(field);
+  validateRequired(values: Array<KeyOf<T>>): this {
+    return values.reduce((acc, field) => {
+      const value: string | undefined = this.getChange(field) as any;
 
       if (value == null || value === "") {
-        this.addError(field, "required");
+        return acc.addError(field, "required");
+      } else {
+        return acc;
       }
-    });
-
-    return this;
+    }, this);
   }
 
-  validateFormat(field: string, regex: RegExp): Changeset {
-    let value = this.getChange(field);
+  validateFormat<K extends KeyOf<T>>(field: K, regex: RegExp): this {
+    let value: string = this.getChange(field) as any;
 
     value = value == null ? "" : value.toString();
 
     if (!regex.test(value)) {
-      this.addError(field, "format", [regex]);
+      return this.addError(field, "format", [regex]);
+    } else {
+      return this;
     }
-
-    return this;
   }
 }
 
-const eq = (a: number, b: number) => a === b;
-const neq = (a: number, b: number) => a !== b;
-const gte = (a: number, b: number) => a >= b;
-
-const lte = (a: number, b: number) => a <= b;
-const gt = (a: number, b: number) => a > b;
-
-const lt = (a: number, b: number) => a < b;
-
-const COMPARISIONS: { [key: string]: (a: number, b: number) => boolean } = {
-  "==": eq,
-  ">=": gte,
-  "<=": lte,
-  "!=": neq,
-  ">": gt,
-  "<": lt,
-  eq,
-  gte,
-  lte,
-  neq,
-  gt,
-  lt
-};
+export interface Changeset<T extends {}>
+  extends Record.Factory<IChangeset<T>> {}
