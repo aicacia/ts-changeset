@@ -1,3 +1,9 @@
 export {
-  IChanges,IChangesetError,ChangesetError,IChangesetErrors,IModified,IChangeset,Changeset
+  IChanges,
+  IChangesetError,
+  ChangesetError,
+  IChangesetErrors,
+  IModified,
+  IChangeset,
+  Changeset
 } from "./Changeset";
