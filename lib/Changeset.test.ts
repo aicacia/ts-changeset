@@ -13,6 +13,7 @@ const changesetFn = (changeset: Changeset<ITestForm>) =>
     .filter(["age", "name", "agreedToTerms"])
     .validateAcceptance("agreedToTerms")
     .validateLength("age", { gt: 18 })
+    .validateLength("age", { lt: 100 })
     .validateFormat("name", /[A-Za-z0-9\-_]+/)
     .validateRequired(["age", "name", "agreedToTerms"]);
 
