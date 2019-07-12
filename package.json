@@ -18,7 +18,7 @@
     "formatTS": "prettier-tslint fix '**/*.{ts,tsx}'",
     "formatJS": "prettier --write '**/*.{js,jsx,json}' --ignore-path .gitignore",
     "format": "npm run formatTS && npm run formatJS",
-    "lint": "tslint -c tslint.json 'lib/**/*.{ts,tsx}'"
+    "lint": "tslint -c tslint.json 'lib/**/*.{ts,tsx}' -e 'lib/**/*.test.*'"
   },
   "keywords": [
     "changeset"
