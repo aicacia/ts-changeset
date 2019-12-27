@@ -14,7 +14,8 @@ export interface IChangesetError<M = any> {
 
 export const ChangesetError = Record<IChangesetError>({
   message: "",
-  values: []
+  values: [],
+  meta: undefined
 });
 
 export type IChangesetErrors<T extends {}> = Map<

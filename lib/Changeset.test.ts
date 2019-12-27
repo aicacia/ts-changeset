@@ -67,11 +67,11 @@ tape("Changeset invalid", (assert: tape.Test) => {
     name: "%#%$%@"
   });
   assert.deepEquals(changeset.getErrors().toJS(), {
-    age: [{ message: "length", values: ["gte", 18] }],
-    name: [{ message: "format", values: [/[A-Za-z0-9\-_]+/] }],
+    age: [{ message: "length", values: ["gte", 18], meta: undefined }],
+    name: [{ message: "format", values: [/[A-Za-z0-9\-_]+/], meta: undefined }],
     agreedToTerms: [
-      { message: "acceptance", values: [] },
-      { message: "required", values: [] }
+      { message: "acceptance", values: [], meta: undefined },
+      { message: "required", values: [], meta: undefined }
     ]
   });
 
