@@ -1,4 +1,3 @@
-import { Map } from "immutable";
 import * as tape from "tape";
 import { Changeset } from "../lib";
 
@@ -12,71 +11,68 @@ const changesetFn = (changeset: Changeset<ITestForm>) =>
   changeset
     .filter(["age", "name", "agreedToTerms"])
     .validateAcceptance("agreedToTerms")
-    .validateLength("age", { gt: 18 })
+    .validateLength("age", { gte: 18 })
     .validateLength("age", { lt: 100 })
     .validateFormat("name", /[A-Za-z0-9\-_]+/)
     .validateRequired(["age", "name", "agreedToTerms"]);
 
 tape("Changeset valid", (assert: tape.Test) => {
-  let changeset = new Changeset({
-    age: 0,
-    name: "",
-    agreedToTerms: false
+  let changeset = new Changeset<ITestForm>({
+    age: 18
   });
 
   changeset = changesetFn(
     changeset.addChanges({
-      age: 20,
-      name: "Nathan",
+      name: "Bob",
       agreedToTerms: true
     })
   );
 
-  assert.equals(changeset.isValid(), true);
+  assert.true(changeset.isValid());
 
-  assert.deepEquals(changeset.getChanges().toJS(), {
-    age: 20,
-    name: "Nathan",
+  assert.deepEquals(changeset.applyChanges().toJS(), {
+    age: 18,
+    name: "Bob",
     agreedToTerms: true
   });
-  assert.true(
-    changeset.get("changes").equals(
-      Map({
-        age: 20,
-        name: "Nathan",
-        agreedToTerms: true
-      })
-    )
-  );
+  assert.deepEquals(changeset.get("changes").toJS(), {
+    name: "Bob",
+    agreedToTerms: true
+  });
+
+  changeset = changeset.clear();
+
+  assert.deepEquals(changeset.applyChanges().toJS(), {
+    age: 18
+  });
 
   assert.end();
 });
 
 tape("Changeset invalid", (assert: tape.Test) => {
-  let changeset = new Changeset({
-    age: 0,
-    name: "",
-    agreedToTerms: false
+  let changeset = new Changeset<ITestForm>({
+    age: 18
   });
 
   changeset = changesetFn(
     changeset.addChanges({
       age: 15,
-      name: "%#%$%@",
-      agreedToTerms: false
+      name: "%#%$%@"
     })
   );
 
-  assert.equals(changeset.isValid(), false);
+  assert.true(changeset.isInvalid());
   assert.deepEquals(changeset.getChanges().toJS(), {
     age: 15,
-    name: "%#%$%@",
-    agreedToTerms: false
+    name: "%#%$%@"
   });
   assert.deepEquals(changeset.getErrors().toJS(), {
-    age: [{ message: "length", values: ["gt", 18] }],
+    age: [{ message: "length", values: ["gte", 18] }],
     name: [{ message: "format", values: [/[A-Za-z0-9\-_]+/] }],
-    agreedToTerms: [{ message: "acceptance", values: [] }]
+    agreedToTerms: [
+      { message: "acceptance", values: [] },
+      { message: "required", values: [] }
+    ]
   });
 
   assert.end();
