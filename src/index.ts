@@ -5,5 +5,5 @@ export {
   IChangesetErrors,
   IModified,
   IChangeset,
-  Changeset
+  Changeset,
 } from "./Changeset";

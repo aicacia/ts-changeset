@@ -21,5 +21,5 @@ export const COMPARISIONS: {
   lte,
   neq,
   gt,
-  lt
+  lt,
 };
