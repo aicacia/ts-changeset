@@ -1,8 +1,8 @@
 import { List, Map, Record as ImmutableRecord } from "immutable";
 import { COMPARISIONS } from "./comparisions";
 
-type KeyOf<T> = keyof T;
-type ValueOf<T> = T[keyof T];
+type KeyOf<T extends Record<string, any>> = keyof T;
+type ValueOf<T extends Record<string, any>> = T[KeyOf<T>];
 
 export type IChanges<T extends Record<string, any>> = Map<KeyOf<T>, ValueOf<T>>;
 
@@ -18,9 +18,9 @@ export const ChangesetError = ImmutableRecord<IChangesetError>({
   meta: undefined,
 });
 
-export type IChangesetErrors<T extends Record<string, any>> = Map<
+export type IChangesetErrors<T extends Record<string, any>, M = any> = Map<
   KeyOf<T>,
-  List<ImmutableRecord<IChangesetError>>
+  List<ImmutableRecord<IChangesetError<M>>>
 >;
 
 export type IModified<T extends Record<string, any>> = Map<KeyOf<T>, boolean>;
@@ -33,11 +33,10 @@ export interface IChangeset<T extends Record<string, any>> {
   valid: boolean;
 }
 
-// TODO: Base class expressions cannot reference class type parameters ts(2562)
-// fix this so we extend ImmutableRecord<IChangeset<T>>
-export class Changeset<T extends Record<string, any>> extends ImmutableRecord<
-  IChangeset<any>
->({
+export class Changeset<
+  T extends Record<string, any>,
+  M = any
+> extends ImmutableRecord<IChangeset<any>>({
   defaults: Map(),
   changes: Map(),
   errors: Map(),
@@ -91,7 +90,7 @@ export class Changeset<T extends Record<string, any>> extends ImmutableRecord<
     values: Array<KeyOf<T>>
   ): Changeset<T> {
     return values.reduce((acc, field) => {
-      const value: string | undefined = changeset.getField(field) as any;
+      const value = changeset.getField(field);
 
       if (value == null || value === "") {
         return acc.addError(field, "required");
@@ -105,16 +104,15 @@ export class Changeset<T extends Record<string, any>> extends ImmutableRecord<
     field: K,
     regex: RegExp
   ): Changeset<T> {
-    let value: string = changeset.getField(field) as any;
+    const value: string = changeset.getField(field) as any;
 
-    value = value == null ? "" : value.toString();
-
-    if (!regex.test(value)) {
+    if (!regex.test(value == null ? "" : value.toString())) {
       return changeset.addError(field, "format", [regex]);
     } else {
       return changeset;
     }
   }
+
   constructor(defaults: Partial<T> | Iterable<[KeyOf<T>, ValueOf<T>]>) {
     super({
       defaults: Map(defaults as any),
@@ -160,11 +158,11 @@ export class Changeset<T extends Record<string, any>> extends ImmutableRecord<
 
   getErrorList<K extends KeyOf<T>>(
     field: K
-  ): List<ImmutableRecord<IChangesetError>> {
+  ): List<ImmutableRecord<IChangesetError<M>>> {
     return this.errors.get(field) || List();
   }
 
-  getErrors(): IChangesetErrors<T> {
+  getErrors(): IChangesetErrors<T, M> {
     return this.errors as any;
   }
 
@@ -180,16 +178,15 @@ export class Changeset<T extends Record<string, any>> extends ImmutableRecord<
     return this.getDefaults().merge(this.getChanges()) as any;
   }
 
-  addError<K extends KeyOf<T>, M = any>(
+  addError<K extends KeyOf<T>>(
     field: K,
     message: string,
     values: any[] = [],
     meta?: M
-  ): this {
-    return this.set(
-      "errors",
-      this.errors.update(field, (errors) =>
-        (errors || List()).push(
+  ) {
+    return this.update("errors", (errors) =>
+      errors.update(field, (errorList) =>
+        (errorList || List()).push(
           ChangesetError({
             message,
             values,
@@ -200,50 +197,50 @@ export class Changeset<T extends Record<string, any>> extends ImmutableRecord<
     ).set("valid", false);
   }
 
-  addChange<K extends KeyOf<T>>(field: K, value: ValueOf<T>): this {
+  addChange<K extends KeyOf<T>>(field: K, value?: ValueOf<T>) {
     return this.update("changes", (changes) =>
       changes.set(field, value)
     ).update("modified", (modified) => modified.set(field, true));
   }
 
-  addChanges(changes: Partial<T>): this {
-    return Object.keys(changes).reduce(
-      (acc, key) => acc.addChange(key as any, (changes as any)[key as any]),
+  addChanges(newChanges: Partial<T>) {
+    return (Object.keys(newChanges) as KeyOf<T>[]).reduce(
+      (acc, key) => acc.addChange(key, newChanges[key]),
       this
     );
   }
 
-  addDefault<K extends KeyOf<T>>(field: K, value: ValueOf<T>): this {
+  addDefault<K extends KeyOf<T>>(field: K, value?: ValueOf<T>) {
     return this.update("defaults", (defaults) => defaults.set(field, value));
   }
 
-  addDefaults(defaults: Partial<T>): this {
-    return Object.keys(defaults).reduce(
-      (acc, key) => acc.addDefault(key as any, (defaults as any)[key as any]),
+  addDefaults(defaults: Partial<T>) {
+    return (Object.keys(defaults) as KeyOf<T>[]).reduce(
+      (acc, key) => acc.addDefault(key, defaults[key]),
       this
     );
   }
 
-  clearErrors(): this {
+  clearErrors() {
     return this.set("errors", Map()).set("valid", true);
   }
 
-  clearChanges(): this {
+  clearChanges() {
     return this.set("changes", Map()).set("modified", Map());
   }
 
-  clearDefaults(): this {
+  clearDefaults() {
     return this.set("defaults", Map());
   }
 
-  clear(): this {
+  clear() {
     return this.clearErrors().clearChanges();
   }
 
-  filter(fields: Array<KeyOf<T>>): this {
+  filter(fields: Array<KeyOf<T>>) {
     return fields.reduce(
-      (acc, field) =>
-        acc
+      (changeset, field) =>
+        changeset
           .update("changes", (changes) =>
             this.hasChange(field)
               ? changes.set(field, this.getChange(field))
@@ -253,34 +250,34 @@ export class Changeset<T extends Record<string, any>> extends ImmutableRecord<
             errors.set(field, this.getErrorList(field))
           )
           .update("modified", (modified) => modified.set(field, true)),
-      this.set("changes", Map()).set("errors", Map()).set("modified", Map())
+      this.clear()
     );
   }
 
-  validate(validator: (changeset: this) => this): this {
+  validate(validator: (changeset: Changeset<T>) => Changeset<T>) {
     return validator(this);
   }
-  validateAcceptance<K extends KeyOf<T>>(field: K): this {
-    return this.validate(
-      (changeset) => Changeset.validateAcceptance(changeset, field) as this
+  validateAcceptance<K extends KeyOf<T>>(field: K) {
+    return this.validate((changeset) =>
+      Changeset.validateAcceptance<T, K>(changeset, field)
     );
   }
   validateLength<K extends KeyOf<T>>(
     field: K,
     opts: { [key: string]: number } = {}
-  ): this {
-    return this.validate(
-      (changeset) => Changeset.validateLength(changeset, field, opts) as this
+  ) {
+    return this.validate((changeset) =>
+      Changeset.validateLength(changeset, field, opts)
     );
   }
-  validateRequired(values: Array<KeyOf<T>>): this {
-    return this.validate(
-      (changeset) => Changeset.validateRequired(changeset, values) as this
+  validateRequired(values: Array<KeyOf<T>>) {
+    return this.validate((changeset) =>
+      Changeset.validateRequired(changeset, values)
     );
   }
-  validateFormat<K extends KeyOf<T>>(field: K, regex: RegExp): this {
-    return this.validate(
-      (changeset) => Changeset.validateFormat(changeset, field, regex) as any
+  validateFormat<K extends KeyOf<T>>(field: K, regex: RegExp) {
+    return this.validate((changeset) =>
+      Changeset.validateFormat(changeset, field, regex)
     );
   }
 }

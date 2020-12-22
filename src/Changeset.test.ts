@@ -11,8 +11,14 @@ const changesetFn = (changeset: Changeset<ITestForm>) =>
   changeset
     .filter(["age", "name", "agreedToTerms"])
     .validateAcceptance("agreedToTerms")
-    .validateLength("age", { gte: 18 })
-    .validateLength("age", { lt: 100 })
+    .validateLength("age", {
+      gte: 18,
+      gt: 17,
+      neq: 0,
+      lt: 100,
+      lte: 99,
+      eq: 18,
+    })
     .validateFormat("name", /[A-Za-z0-9\-_]+/)
     .validateRequired(["age", "name", "agreedToTerms"]);
 
@@ -67,7 +73,11 @@ tape("Changeset invalid", (assert: tape.Test) => {
     name: "%#%$%@",
   });
   assert.deepEquals(changeset.getErrors().toJS(), {
-    age: [{ message: "length", values: ["gte", 18], meta: undefined }],
+    age: [
+      { message: "length", values: ["gte", 18], meta: undefined },
+      { message: "length", values: ["gt", 17], meta: undefined },
+      { message: "length", values: ["eq", 18], meta: undefined },
+    ],
     name: [{ message: "format", values: [/[A-Za-z0-9\-_]+/], meta: undefined }],
     agreedToTerms: [
       { message: "acceptance", values: [], meta: undefined },

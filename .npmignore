@@ -1,9 +1,10 @@
-node_modules
+.nyc_output
 coverage
-test
-npm-debug.log
-tsconfig.json
+node_modules
 .vscode
 .editorconfig
+.eslintignore
+.eslintrc
 .gitignore
-.nyc_output
+npm-debug.log
+tsconfig.json
