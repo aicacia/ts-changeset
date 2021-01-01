@@ -1,7 +1,10 @@
+.github
 .nyc_output
-coverage
-node_modules
 .vscode
+coverage
+docs
+src
+node_modules
 .editorconfig
 .eslintignore
 .eslintrc
