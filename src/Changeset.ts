@@ -176,8 +176,12 @@ export class Changeset<
     return this.changes as IChanges<T>;
   }
 
-  applyChanges(): IChanges<T> {
+  getFields(): IChanges<T> {
     return this.getDefaults().merge(this.getChanges());
+  }
+
+  applyChanges(): IChanges<T> {
+    return this.getFields();
   }
 
   addError(field: KeyOf<T>, message: string, values: any[] = [], meta?: M) {

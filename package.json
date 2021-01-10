@@ -1,6 +1,6 @@
 {
   "name": "@aicacia/changeset",
-  "version": "0.1.8",
+  "version": "0.1.9",
   "description": "ecto like changesets for typescript",
   "repository": {
     "type": "git",
@@ -16,11 +16,12 @@
     "coverage": "nyc --reporter=lcov --check-coverage --lines=75 --require ts-node/register tape src/**/*.test.{ts,tsx} | tap-spec; nyc report ---reporter=text",
     "clean": "rm -rf ./lib",
     "lint": "eslint . --fix",
-    "prettier": "prettier --ignore-path ./.eslintignore --ignore-unknown --write ."
+    "prettier": "prettier --ignore-path ./.eslintignore --ignore-unknown --write .",
+    "preCommit": "npm run prettier && npm run lint && npm run coverage"
   },
   "husky": {
     "hooks": {
-      "pre-commit": "npm run prettier && npm run lint && npm run coverage"
+      "pre-commit": "npm run preCommit"
     }
   },
   "keywords": [
@@ -33,10 +34,10 @@
     "@types/tape": "4",
     "@typescript-eslint/eslint-plugin": "4",
     "@typescript-eslint/parser": "4",
-    "husky": "4",
     "eslint": "7",
     "eslint-config-prettier": "7",
     "eslint-plugin-prettier": "3",
+    "husky": "4",
     "immutable": "^4.0.0-rc.12",
     "nyc": "15",
     "prettier": "2",
