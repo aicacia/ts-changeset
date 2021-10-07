@@ -1,4 +1,5 @@
-import { List, Map, Record as ImmutableRecord, RecordOf } from "immutable";
+import type { RecordOf } from "immutable";
+import { List, Map, Record as ImmutableRecord } from "immutable";
 import { COMPARISIONS } from "./comparisions";
 
 type KeyOf<T extends Record<string, any>> = keyof T;

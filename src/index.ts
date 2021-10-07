@@ -1,9 +1,8 @@
-export {
+export type {
   IChanges,
   IChangesetError,
-  ChangesetError,
   IChangesetErrors,
   IModified,
   IChangeset,
-  Changeset,
 } from "./Changeset";
+export { ChangesetError, Changeset } from "./Changeset";

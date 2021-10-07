@@ -1,7 +1,10 @@
-.github
+.github/
 .nyc_output/
 .vscode/
 coverage/
 docs/
-lib/
+types/
+browser/
+cjs/
+esm/
 node_modules/
